@@ -41,19 +41,38 @@ def export_summary_csv(json_files: List[Path], output_file: Path):
         with open(json_file, 'r') as f:
             data = json.load(f)
         
+        # Handle both old (cluster_context ARN) and new (cluster name) formats
         cluster_context = data.get('args', {}).get('cluster_context', '')
-        region, cluster_name = parse_cluster_info(cluster_context)
+        if cluster_context:
+            region, cluster_name = parse_cluster_info(cluster_context)
+        else:
+            # New format: cluster is a direct field
+            cluster_name = data.get('cluster', '')
+            region = ''  # Region not available in new format
+        
+        # Handle both timestamp formats
+        timestamp = data.get('timestamp', '') or data.get('start_time', '')
+        
+        # Handle both install_time and elapsed_time
+        elapsed = data.get('install_time', '') or data.get('elapsed_time', '')
+        
+        # Get scenario and action if available (new format)
+        args = data.get('args', {})
+        scenario = args.get('scenario', '')
+        action = args.get('action', '')
             
         row = {
             'region': region,
             'cluster': cluster_name,
-            'timestamp': data.get('timestamp', ''),
-            'namespaces': ','.join(data.get('args', {}).get('namespaces', [])),
-            'install_time': data.get('install_time', ''),
+            'timestamp': timestamp,
+            'scenario': scenario,
+            'action': action,
+            'namespaces': ','.join(args.get('namespaces', [])),
+            'elapsed_time': elapsed,
         }
         
-        # Add postprocessed statistics
-        postprocessed = data.get('postprocessed', {})
+        # Add postprocessed statistics (handle both 'postprocessed' and 'postprocessed_data')
+        postprocessed = data.get('postprocessed', {}) or data.get('postprocessed_data', {})
         row.update({
             'scale_direction': postprocessed.get('scale_direction', ''),
             'scale_amount': postprocessed.get('scale_amount', ''),
@@ -67,19 +86,22 @@ def export_summary_csv(json_files: List[Path], output_file: Path):
             'node_skew_mean': postprocessed.get('node_skew_mean', ''),
             'node_skew_median': postprocessed.get('node_skew_median', ''),
             'node_skew_max': postprocessed.get('node_skew_max', ''),
+            'node_skew_percentage_mean': postprocessed.get('node_skew_percentage_mean', ''),
+            'node_skew_percentage_median': postprocessed.get('node_skew_percentage_median', ''),
+            'node_skew_percentage_max': postprocessed.get('node_skew_percentage_max', ''),
             'nodes_used_avg': postprocessed.get('nosed_used_avg', ''),
             'nodes_used_median': postprocessed.get('nosed_used_median', ''),
             'nodes_used_max': postprocessed.get('nosed_used_max', ''),
             'nodes_used_min': postprocessed.get('nosed_used_min', ''),
         })
         
-        # Add cluster info from first measurement
-        measurements = data.get('measurements', [])
+        # Add cluster info from first measurement (handle both 'measurements' and 'measurements_taken')
+        measurements = data.get('measurements', []) or data.get('measurements_taken', [])
         if measurements:
-            cluster = measurements[0].get('cluster', {})
+            cluster_data = measurements[0].get('cluster', {})
             row.update({
-                'node_count': cluster.get('node_count', ''),
-                'eligible_node_count': cluster.get('eligible_node_count', ''),
+                'node_count': cluster_data.get('node_count', ''),
+                'eligible_node_count': cluster_data.get('eligible_node_count', ''),
             })
             # Count deployments
             row['deployment_count'] = len(measurements[0].get('deployments', {}))
@@ -106,12 +128,24 @@ def export_deployments_csv(json_files: List[Path], output_file: Path):
         with open(json_file, 'r') as f:
             data = json.load(f)
         
-        timestamp = data.get('timestamp', '')
-        cluster_context = data.get('args', {}).get('cluster_context', '')
-        region, cluster_name = parse_cluster_info(cluster_context)
+        # Handle both timestamp formats
+        timestamp = data.get('timestamp', '') or data.get('start_time', '')
         
-        # Get measurements (could be measurements_post or just measurements array)
-        measurements = data.get('measurements', [])
+        # Handle both old (cluster_context ARN) and new (cluster name) formats
+        cluster_context = data.get('args', {}).get('cluster_context', '')
+        if cluster_context:
+            region, cluster_name = parse_cluster_info(cluster_context)
+        else:
+            cluster_name = data.get('cluster', '')
+            region = ''
+        
+        # Get scenario and action if available (new format)
+        args = data.get('args', {})
+        scenario = args.get('scenario', '')
+        action = args.get('action', '')
+        
+        # Get measurements (handle multiple formats)
+        measurements = data.get('measurements', []) or data.get('measurements_taken', [])
         if not measurements:
             # Try old format with measurements_pre/post
             measurements_post = data.get('measurements_post')
@@ -128,12 +162,15 @@ def export_deployments_csv(json_files: List[Path], output_file: Path):
                     'cluster': cluster_name,
                     'timestamp': timestamp,
                     'measurement_timestamp': measurement_timestamp,
+                    'scenario': scenario,
+                    'action': action,
                     'deployment_name': deployment_name,
                     'total_pods': deployment_data.get('total_pods', ''),
                     'nodes_used': deployment_data.get('nodes_used', ''),
                     'max_pods': deployment_data.get('max_pods', ''),
                     'min_pods': deployment_data.get('min_pods', ''),
                     'node_skew': deployment_data.get('node_skew', ''),
+                    'node_skew_percentage': deployment_data.get('node_skew_percentage', ''),
                     'mean_pods': deployment_data.get('mean_pods', ''),
                     'median_pods': deployment_data.get('median_pods', ''),
                     'coefficient_of_variation': deployment_data.get('coefficient_of_variation', ''),
