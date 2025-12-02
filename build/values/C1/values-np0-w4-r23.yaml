@@ -1,7 +1,0 @@
-affinity: {}
-nodeSelector: {}
-replicaCount: 23
-service:
-  port: 80
-  type: ClusterIP
-tolerations: []

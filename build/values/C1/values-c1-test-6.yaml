@@ -1,0 +1,8 @@
+affinity: {}
+nodeSelector: {}
+replicaCount: 34
+service:
+  port: 80
+  type: ClusterIP
+tolerations: []
+topologySpreadConstraints: {}
