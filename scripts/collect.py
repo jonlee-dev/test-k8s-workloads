@@ -17,6 +17,7 @@ from measurements import Measurements, ClusterNodeData, DeploymentDistributionDa
 from postprocess import PostprocessedData, ExperimentResult
 from utils import setup_logging, OUTPUT_DIR
 from scenarios import Scenario, Mechanism, parse_scenario
+from experiment import Action
 
 PROD_LIVE_MAIN_CONTEXT_NAME = "arn:aws:eks:us-east-1:906324658258:cluster/prod-live-main"
 TEST_NAMESPACES = [
@@ -175,6 +176,8 @@ def parse_args() -> argparse.Namespace:
         replicas=0,
     )
     parser.add_argument("--scenario", type=parse_scenario, required=False, default=scenario, help=argparse.SUPPRESS)
+    # Add action with default NONE for data collection (required by ExperimentResult.to_dict())
+    parser.add_argument("--action", type=Action, required=False, default=Action.NONE, help=argparse.SUPPRESS)
     return parser.parse_args()
 
 

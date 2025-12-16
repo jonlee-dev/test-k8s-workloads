@@ -60,6 +60,11 @@ def export_summary_csv(json_files: List[Path], output_file: Path):
         args = data.get('args', {})
         scenario = args.get('scenario', '')
         action = args.get('action', '')
+        
+        # Handle namespaces - can be in args or as 'namespace'
+        namespaces = args.get('namespaces', [])
+        if not namespaces and args.get('namespace'):
+            namespaces = [args.get('namespace')]
             
         row = {
             'region': region,
@@ -67,7 +72,7 @@ def export_summary_csv(json_files: List[Path], output_file: Path):
             'timestamp': timestamp,
             'scenario': scenario,
             'action': action,
-            'namespaces': ','.join(args.get('namespaces', [])),
+            'namespaces': ','.join(namespaces) if namespaces else '',
             'elapsed_time': elapsed,
         }
         
@@ -89,22 +94,34 @@ def export_summary_csv(json_files: List[Path], output_file: Path):
             'node_skew_percentage_mean': postprocessed.get('node_skew_percentage_mean', ''),
             'node_skew_percentage_median': postprocessed.get('node_skew_percentage_median', ''),
             'node_skew_percentage_max': postprocessed.get('node_skew_percentage_max', ''),
+            # Note: the source has a typo 'nosed_used' instead of 'nodes_used'
             'nodes_used_avg': postprocessed.get('nosed_used_avg', ''),
             'nodes_used_median': postprocessed.get('nosed_used_median', ''),
             'nodes_used_max': postprocessed.get('nosed_used_max', ''),
             'nodes_used_min': postprocessed.get('nosed_used_min', ''),
         })
         
-        # Add cluster info from first measurement (handle both 'measurements' and 'measurements_taken')
+        # Add cluster info from first measurement (handle multiple formats)
         measurements = data.get('measurements', []) or data.get('measurements_taken', [])
+        cluster_data = {}
+        deployment_count = 0
+        
         if measurements:
             cluster_data = measurements[0].get('cluster', {})
-            row.update({
-                'node_count': cluster_data.get('node_count', ''),
-                'eligible_node_count': cluster_data.get('eligible_node_count', ''),
-            })
-            # Count deployments
-            row['deployment_count'] = len(measurements[0].get('deployments', {}))
+            deployment_count = len(measurements[0].get('deployments', {}))
+        else:
+            # Try old format with measurements_pre/post
+            measurements_pre = data.get('measurements_pre', {})
+            measurements_post = data.get('measurements_post', {})
+            # Prefer post measurements for cluster data
+            cluster_data = measurements_post.get('cluster', {}) or measurements_pre.get('cluster', {})
+            deployment_count = len(measurements_post.get('deployments', {}))
+        
+        row.update({
+            'node_count': cluster_data.get('node_count', ''),
+            'eligible_node_count': cluster_data.get('eligible_node_count', ''),
+            'deployment_count': deployment_count if deployment_count else '',
+        })
         
         rows.append(row)
     
@@ -157,6 +174,8 @@ def export_deployments_csv(json_files: List[Path], output_file: Path):
             measurement_timestamp = measurement.get('timestamp', timestamp)
             
             for deployment_name, deployment_data in deployments.items():
+                # Handle deployment name - can be in 'name' field or as the dict key
+                name = deployment_data.get('name', deployment_name)
                 row = {
                     'region': region,
                     'cluster': cluster_name,
@@ -164,7 +183,7 @@ def export_deployments_csv(json_files: List[Path], output_file: Path):
                     'measurement_timestamp': measurement_timestamp,
                     'scenario': scenario,
                     'action': action,
-                    'deployment_name': deployment_name,
+                    'deployment_name': name,
                     'total_pods': deployment_data.get('total_pods', ''),
                     'nodes_used': deployment_data.get('nodes_used', ''),
                     'max_pods': deployment_data.get('max_pods', ''),
