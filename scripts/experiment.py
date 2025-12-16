@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-from enum import Enum
 import logging
 import sys
 
@@ -15,6 +14,7 @@ import scenarios
 import collect
 import utils
 from postprocess import ExperimentResult, PostprocessedData
+from scenarios import Action
 
 DEFAULT_RELEASE_PREFIX = ""
 COSMOS_DEV_COSMOS_CONTEXT_NAME = "arn:aws:eks:us-east-1:843722649052:cluster/cosmos-dev-cosmos"
@@ -22,22 +22,6 @@ COSMOS_DEV_COSMOS_CONTEXT_NAME = "arn:aws:eks:us-east-1:843722649052:cluster/cos
 ROLLOUT_WAIT = 300
 
 logger = logging.getLogger(__name__)
-
-
-class Action(Enum):
-    INSTALL = "install"
-    UNINSTALL = "uninstall"
-    RESTART = "restart"
-    NONE = "none"
-
-    def __str__(self):
-        return self.value
-
-    def __repr__(self):
-        return self.value
-
-    def __eq__(self, other):
-        return self.value == other.value
 
 
 def parse_args() -> Tuple[argparse.Namespace, Dict[str, Path]]:

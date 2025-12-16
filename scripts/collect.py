@@ -16,8 +16,7 @@ from deploy import verify_cluster
 from measurements import Measurements, ClusterNodeData, DeploymentDistributionData
 from postprocess import PostprocessedData, ExperimentResult
 from utils import setup_logging, OUTPUT_DIR
-from scenarios import Scenario, Mechanism, parse_scenario
-from experiment import Action
+from scenarios import Scenario, Mechanism, parse_scenario, Action
 
 PROD_LIVE_MAIN_CONTEXT_NAME = "arn:aws:eks:us-east-1:906324658258:cluster/prod-live-main"
 TEST_NAMESPACES = [

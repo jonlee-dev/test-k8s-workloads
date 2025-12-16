@@ -10,6 +10,24 @@ from typing import List, Tuple
 
 logger = logging.getLogger(__name__)
 
+
+class Action(Enum):
+    """Action to perform in an experiment."""
+    INSTALL = "install"
+    UNINSTALL = "uninstall"
+    RESTART = "restart"
+    NONE = "none"
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return self.value
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+
 NODEPOOL_LABEL = "workload-isolation-test-nodepool"
 NODEPOOL_VALUE_PREFIX = "workload-isolation-test-nodepool-"
 
