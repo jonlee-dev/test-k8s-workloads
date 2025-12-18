@@ -18,11 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def parse_cluster_info(cluster_context: str) -> tuple[str, str]:
-    """Parse region and cluster name from cluster context ARN.
-    
-    Example: arn:aws:eks:us-east-1:906324658258:cluster/prod-live-main
-    Returns: ('us-east-1', 'prod-live-main')
-    """
+    """Parse region and cluster name from cluster context ARN."""
     if cluster_context.startswith('arn:aws:eks:'):
         parts = cluster_context.split(':')
         region = parts[3] if len(parts) > 3 else ''
