@@ -161,6 +161,12 @@ def export_deployments_csv(json_files: List[Path], output_file: Path):
         scenario = args.get('scenario', '')
         action = args.get('action', '')
         
+        # Handle namespaces - can be in args as 'namespaces' (list) or 'namespace' (string)
+        namespaces = args.get('namespaces', [])
+        if not namespaces and args.get('namespace'):
+            namespaces = [args.get('namespace')]
+        namespace_str = ','.join(namespaces) if namespaces else ''
+        
         # Get measurements (handle multiple formats)
         measurements = data.get('measurements', []) or data.get('measurements_taken', [])
         if not measurements:
@@ -179,6 +185,7 @@ def export_deployments_csv(json_files: List[Path], output_file: Path):
                 row = {
                     'region': region,
                     'cluster': cluster_name,
+                    'namespace': namespace_str,
                     'timestamp': timestamp,
                     'measurement_timestamp': measurement_timestamp,
                     'scenario': scenario,
