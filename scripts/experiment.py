@@ -17,7 +17,7 @@ from postprocess import ExperimentResult, PostprocessedData
 from scenarios import Action
 
 DEFAULT_RELEASE_PREFIX = ""
-COSMOS_DEV_COSMOS_CONTEXT_NAME = "arn:aws:eks:us-east-1:843722649052:cluster/cosmos-dev-cosmos"
+COSMOS_DEV_COSMOS_CONTEXT_NAME = ""
 
 ROLLOUT_WAIT = 300
 
